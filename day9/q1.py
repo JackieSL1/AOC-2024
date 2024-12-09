@@ -10,7 +10,12 @@ def fragment_disk(disk: str) -> int:
     out_of_space = False
 
     position = 0
-    right_offset = -1
+
+    # Offset should start on first file
+    if len(disk)%2==0:
+        right_offset = -2
+    else:
+        right_offset = -1
     right_size = 0
 
     left_id = 0
@@ -22,6 +27,13 @@ def fragment_disk(disk: str) -> int:
         if on_file:
             # We're looking at a file
             for _ in range(size):
+
+                if left_id >= right_id:
+                    if right_size == 0:
+                        break
+
+                    right_size -= 1
+
                 print(left_id, end="")
                 result += position * left_id
                 position += 1
@@ -36,16 +48,17 @@ def fragment_disk(disk: str) -> int:
         else:
             # We're looking at free space
             for _ in range(size):
-                print(": ", left_id, right_id, right_size)
                 if left_id >= right_id:
                     out_of_space = True
 
                 if right_size == 0:
+                    if out_of_space:
+                        break
+
                     right_id -= 1
                     right_size = int(disk[right_offset])
                     right_offset -= 2
 
-                # print(f"({position}, {right_id}), size={right_size}")
                 print(right_id, end="")
                 result += position * right_id
                 position += 1
@@ -53,12 +66,13 @@ def fragment_disk(disk: str) -> int:
 
             # The next item will be a file
             on_file = True
+            if out_of_space:
+                for _ in range(right_size):
+                    result += position * left_id
+                    print(left_id, end="")
+                    position += 1
+                break
 
-
-    # Add final files, if any
-    for _ in range(right_size):
-        result += position * left_id
-        left_id += 1
 
     return result
 
